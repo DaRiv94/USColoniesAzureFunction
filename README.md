@@ -1,6 +1,6 @@
-## FGR API Docs
+## US Colonies Azure Function
 
-This application was built to show a Microsoft Azure Function in use.
+This application was built to show a Microsoft Azure Function in action.
 
 
 ### Shortcuts
