@@ -7,27 +7,53 @@ using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using Microsoft.Azure.WebJobs.Host;
+
 
 namespace ColonialUnitedStates
 {
-    public static class Function1
+    public static class USColonyApi
     {
-        [FunctionName("Function1")]
-        public static async Task<IActionResult> Run(
-            [HttpTrigger(AuthorizationLevel.Anonymous, "get", "post", Route = null)] HttpRequest req,
-            ILogger log)
+
+        [FunctionName("AddUSColony")]
+        public static async Task<IActionResult> AddUSColony(
+            [HttpTrigger(AuthorizationLevel.Function, "post", Route = "add")]HttpRequest req,
+            [Table("UsColonies",  Connection = "AzureWebJobsStorage")] IAsyncCollector<USColonyTableEntity> USColonyTable,
+            TraceWriter log)
         {
-            log.LogInformation("C# HTTP trigger function processed a request.");
-
-            string name = req.Query["name"];
-
+            log.Info("adding a new todo USColony");
             string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
-            dynamic data = JsonConvert.DeserializeObject(requestBody);
-            name = name ?? data?.name;
+            var input = JsonConvert.DeserializeObject<USColonyAddEntity>(requestBody);
 
-            return name != null
-                ? (ActionResult)new OkObjectResult($"Hello, {name}")
-                : new BadRequestObjectResult("Please pass a name on the query string or in the request body");
+            var UScolony = new USColony()
+            {
+                Id = input.NumberToJoinTheUnion.ToString(),
+                Name = input.Name,
+                Capital=input.Capital,
+                YearEstablished= input.YearEstablished,
+                NumberToJoinTheUnion=input.NumberToJoinTheUnion,
+
+            };
+            await USColonyTable.AddAsync(UScolony.ToTableEntity());
+            return new OkObjectResult(UScolony);
+        }
+
+
+
+
+        [FunctionName("GetUSColonyById")]
+        public static IActionResult Run(
+            [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "uscolony/{id}")]HttpRequest req,
+            [Table("UsColonies", "USColonies", "{id}", Connection = "AzureWebJobsStorage")] USColonyTableEntity usColony,
+            TraceWriter log, string id)
+        {
+            log.Info("Getting todo item by id");
+            if (usColony == null)
+            {
+                log.Info($"Item {id} not found");
+                return new NotFoundResult();
+            }
+            return new OkObjectResult(usColony.ToUSColony());
         }
     }
 }
