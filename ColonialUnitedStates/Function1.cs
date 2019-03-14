@@ -42,7 +42,7 @@ namespace ColonialUnitedStates
 
 
         [FunctionName("GetUSColonyById")]
-        public static IActionResult Run(
+        public static IActionResult GetUsColonyById(
             [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "uscolony/{id}")]HttpRequest req,
             [Table("UsColonies", "USColonies", "{id}", Connection = "AzureWebJobsStorage")] USColonyTableEntity usColony,
             TraceWriter log, string id)
@@ -55,5 +55,7 @@ namespace ColonialUnitedStates
             }
             return new OkObjectResult(usColony.ToUSColony());
         }
+
+
     }
 }
